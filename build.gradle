@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+}
+
+group = 'com.obfuscator'
+version = '1.0'
+
+
+javafx {
+    version = '24'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.openjfx:javafx-controls'
+    implementation 'org.openjfx:javafx-fxml'
+    implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.27.1'
+}
+
+application {
+    mainClass = 'obfuscator.ObfuscatorApp'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'obfuscator.ObfuscatorApp',
+                'Implementation-Title': 'Java Obfuscator',
+                'Implementation-Version': '1.0'
+        )
+    }
+
+    // Собрать все зависимости внутрь JAR («fat JAR»)
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    // Убрать дублирующиеся файлы (например, LICENSE, META-INF/)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // Исключить signature-файлы (иначе SecurityException при запуске)
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
