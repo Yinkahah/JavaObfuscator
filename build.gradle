@@ -12,6 +12,16 @@ javafx {
     version = '24'
     modules = ['javafx.controls', 'javafx.fxml']
 }
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(24)
+        vendor = JvmVendorSpec.ADOPTIUM  // или TEMURIN, AMAZON, MICROSOFT
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 24
+}
 repositories {
     mavenCentral()
 }
