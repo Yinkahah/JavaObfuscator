@@ -49,7 +49,15 @@ public class DeclarationCollector {
         varMap.replaceAll((k, v) -> NameGenerator.generate("v"));
     }
 
-    public Map<String, String> getClassMap() { return classMap; }
-    public Map<String, String> getMethodMap() { return methodMap; }
-    public Map<String, String> getVarMap() { return varMap; }
+    public Map<String, String> getClassMap() {
+        return classMap;
+    }
+
+    public Map<String, String> getMethodMap() {
+        return methodMap;
+    }
+
+    public Map<String, String> getVarMap() {
+        return varMap;
+    }
 }

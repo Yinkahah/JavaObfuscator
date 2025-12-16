@@ -47,7 +47,7 @@ public class JavaObfuscator {
                           Path outputRoot) throws Exception {
 
         CompilationUnit cu = StaticJavaParser.parse(inputFile);
-        final String[] newFileName = { inputFile.getFileName().toString() };
+        final String[] newFileName = {inputFile.getFileName().toString()};
 
         cu.accept(new VoidVisitorAdapter<Void>() {
 
@@ -104,7 +104,7 @@ public class JavaObfuscator {
                     ResolvedTypeDeclaration declaringType = r.declaringType();
                     String originalClass = declaringType.getClassName();
 
-                    if (methodMap.containsKey(originalMethod) && classMap.containsKey(originalClass)) {
+                    if (methodMap.containsKey(originalMethod) && (classMap.containsKey(originalClass)|| classMap.containsValue(originalClass))) {
                         n.setName(methodMap.get(originalMethod));
                     }
                     return;
@@ -141,10 +141,12 @@ public class JavaObfuscator {
             public void visit(VariableDeclarator n, Void arg) {
                 super.visit(n, arg);
                 String old = n.getNameAsString();
-                String newName = varMap.get(old);
-                if (newName != null) {
-                    n.setName(newName);
+                if (varMap.containsKey(old)) {
+                    n.setName(varMap.get(old));
+                    return;
                 }
+                varMap.computeIfAbsent(old,k -> NameGenerator.generate("v"));
+                n.setName(varMap.get(old));
             }
 
             @Override
