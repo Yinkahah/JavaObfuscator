@@ -16,20 +16,24 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 
 import java.nio.file.*;
 import java.util.Map;
+import java.util.Set;
 
 public class JavaObfuscator {
 
     private final Map<String, String> classMap;
     private final Map<String, String> methodMap;
     private final Map<String, String> varMap;
+    private final Set<String> obfSet;
 
     public JavaObfuscator(Path sourceRoot,
                           Map<String, String> classM,
                           Map<String, String> methodM,
-                          Map<String, String> varM) {
+                          Map<String, String> varM,
+                          Set<String> obfS) {
         classMap = classM;
         this.methodMap = methodM;
         this.varMap = varM;
+        obfSet = obfS;
         initSymbolSolver(sourceRoot);
     }
 
@@ -109,32 +113,30 @@ public class JavaObfuscator {
                     }
                     return;
                 } catch (Exception ignored) {
-                    // fallback
+                    if (n.getScope().isEmpty()) {
+                        n.findAncestor(ClassOrInterfaceDeclaration.class)
+                                .ifPresent(parent -> {
+                                    String currentClass = parent.getNameAsString();
+                                    String methodName = n.getNameAsString();
+                                    if (classMap.containsKey(currentClass) && methodMap.containsKey(methodName)) {
+                                        n.setName(methodMap.get(methodName));
+                                    }
+                                });
+                        return;
+                    }
+
+                    if (n.getScope().get().isNameExpr()) {
+                        NameExpr scope = n.getScope().get().asNameExpr();
+                        String scopeName = scope.getNameAsString();
+                        String methodName = n.getNameAsString();
+                        if (obfSet.contains(scopeName) && methodMap.containsKey(methodName)) {
+                            n.setName(methodMap.get(methodName));
+                        }
+                    }
                 }
 
                 // fallback 1: вызов без scope
-                if (n.getScope().isEmpty()) {
-                    n.findAncestor(ClassOrInterfaceDeclaration.class)
-                            .ifPresent(parent -> {
-                                String currentClass = parent.getNameAsString();
-                                String methodName = n.getNameAsString();
-                                if (classMap.containsKey(currentClass) && methodMap.containsKey(methodName)) {
-                                    n.setName(methodMap.get(methodName));
-                                }
-                            });
-                    return;
-                }
 
-                // fallback 2: статический вызов ClassName.method()
-                if (n.getScope().get().isNameExpr()) {
-                    NameExpr scope = n.getScope().get().asNameExpr();
-                    String className = scope.getNameAsString();
-                    String methodName = n.getNameAsString();
-                    if (classMap.containsKey(className) && methodMap.containsKey(methodName)) {
-                        n.setName(methodMap.get(methodName));
-                        scope.setName(classMap.get(className)); // ← важно!
-                    }
-                }
             }
 
             @Override
@@ -147,6 +149,10 @@ public class JavaObfuscator {
                 }
                 varMap.computeIfAbsent(old,k -> NameGenerator.generate("v"));
                 n.setName(varMap.get(old));
+                if(classMap.containsKey(n.getTypeAsString())){
+                    obfSet.add(n.getNameAsString());
+                    obfSet.add(old);
+                }
             }
 
             @Override
@@ -156,6 +162,10 @@ public class JavaObfuscator {
                 String newName = varMap.get(old);
                 if (newName != null) {
                     n.setName(newName);
+                    if(classMap.containsKey(n.getTypeAsString())){
+                        obfSet.add(newName);
+                        obfSet.add(old);
+                    }
                 }
             }
 

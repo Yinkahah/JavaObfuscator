@@ -138,7 +138,8 @@ public class ObfuscatorUI extends Application {
                     inputRoot,
                     collector.getClassMap(),
                     collector.getMethodMap(),
-                    collector.getVarMap()
+                    collector.getVarMap(),
+                    collector.getObfSet()
             );
 
             try (Stream<Path> stream = Files.walk(inputRoot)) {

@@ -7,13 +7,16 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class DeclarationCollector {
 
     private final Map<String, String> classMap = new HashMap<>();
     private final Map<String, String> methodMap = new HashMap<>();
     private final Map<String, String> varMap = new HashMap<>();
+    private final Set<String> obfSet = new HashSet<>();
 
     public void collect(Path inputFile) throws Exception {
         CompilationUnit cu = StaticJavaParser.parse(inputFile);
@@ -23,14 +26,19 @@ public class DeclarationCollector {
                 super.visit(n, arg);
                 String name = n.getNameAsString();
                 classMap.putIfAbsent(name, null); // placeholder
+                obfSet.add(name);
                 n.getMembers().forEach(member -> {
                     if (member instanceof MethodDeclaration md) {
                         if (!"main".equals(md.getNameAsString()) && !md.isAnnotationPresent("Override")) {
                             methodMap.putIfAbsent(md.getNameAsString(), null);
                         }
                     } else if (member instanceof FieldDeclaration fd) {
-                        fd.getVariables().forEach(vd ->
-                                varMap.putIfAbsent(vd.getNameAsString(), null));
+                        fd.getVariables().forEach(vd ->{
+                            varMap.putIfAbsent(vd.getNameAsString(), null);
+                            if(classMap.containsKey(vd.getTypeAsString())){
+                                obfSet.add(vd.getNameAsString());
+                            }
+                        });
                     }
                 });
             }
@@ -39,6 +47,9 @@ public class DeclarationCollector {
             public void visit(Parameter n, Void arg) {
                 super.visit(n, arg);
                 varMap.putIfAbsent(n.getNameAsString(), null);
+                if(classMap.containsKey(n.getTypeAsString())){
+                    obfSet.add(n.getNameAsString());
+                }
             }
         }, null);
     }
@@ -47,6 +58,16 @@ public class DeclarationCollector {
         classMap.replaceAll((k, v) -> NameGenerator.generate("C"));
         methodMap.replaceAll((k, v) -> NameGenerator.generate("m"));
         varMap.replaceAll((k, v) -> NameGenerator.generate("v"));
+        Set<String> temp = new HashSet<>();
+        for(String p: obfSet){
+            if(classMap.containsKey(p)){
+                temp.add(classMap.get(p));
+            }
+            if(varMap.containsKey(p)){
+                temp.add(varMap.get(p));
+            }
+        }
+        obfSet.addAll(temp);
     }
 
     public Map<String, String> getClassMap() {
@@ -59,5 +80,8 @@ public class DeclarationCollector {
 
     public Map<String, String> getVarMap() {
         return varMap;
+    }
+    public Set<String> getObfSet(){
+        return obfSet;
     }
 }

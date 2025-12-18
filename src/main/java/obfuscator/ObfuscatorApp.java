@@ -15,7 +15,7 @@ public class ObfuscatorApp {
             return;
         }
         // Консольный режим (как у вас)
-        Path inputRoot = Paths.get(args[1]).toAbsolutePath();
+        Path inputRoot = Paths.get(args[0]).toAbsolutePath();
         Path outputRoot = Paths.get("obfuscated_output").toAbsolutePath();
 
         if (!Files.exists(inputRoot)) {
@@ -47,7 +47,8 @@ public class ObfuscatorApp {
                 inputRoot,
                 collector.getClassMap(),
                 collector.getMethodMap(),
-                collector.getVarMap()
+                collector.getVarMap(),
+                collector.getObfSet()
         );
 
         try (Stream<Path> stream = Files.walk(inputRoot)) {
