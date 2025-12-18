@@ -9,8 +9,8 @@ public class ObfuscatorApp {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             System.out.println("Usage:");
-            System.out.println("  gradle run --args=\"--cli <inputDir>\"                   — CLI-режим");
-            System.out.println("  java -jar obfuscator.jar --cli <inputDir>              — CLI из JAR");
+            System.out.println("  gradle run --args=\"<inputDir>\"                   — CLI-режим");
+            System.out.println("  java -jar obfuscator.jar <inputDir>              — CLI из JAR");
             obfuscator.ui.ObfuscatorUI.main(new String[0]);
             return;
         }

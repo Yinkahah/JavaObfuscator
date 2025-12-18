@@ -12,4 +12,4 @@ Unixlike os: ```./gradlew build```
 Запуск: ```./gradlew run```
 
 
-Запуск в текстовом режиме: ```./gradlew run --args="--cli <inputDir>/<inputFile>"```
+Запуск в текстовом режиме: ```./gradlew run --args="<inputDir>/<inputFile>"```
